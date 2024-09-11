@@ -25,14 +25,14 @@ export default function SimpleHeader() {
             </li>
           </ul>
           <button>
-            <Image src="/searchlabs.svg" alt="search" width={24} height={24} />
+            <Image src="/searchlabs.svg" alt="search labs icon" width={24} height={24} />
           </button>
           <button>
             {" "}
-            <Image src="/grid.svg" alt="grid" width={24} height={24} />
+            <Image src="/grid.svg" alt="grid icon" width={24} height={24} />
           </button>
           <button>
-            <Image src="/avatar.png" alt="search" width={20} height={20} />
+            <Image src="/avatar.png" alt="avatar" width={20} height={20} />
           </button>
         </div>
       </nav>
