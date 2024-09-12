@@ -16,7 +16,7 @@ interface SearchBarProps {
 
 export default function SearchBar({ onSearch, onVoiceSearch }: SearchBarProps) {
   const dispatch = useDispatch<AppDispatch>();
-  const { query, queryType } = useSelector((state: RootState) => state.search);
+  const { query } = useSelector((state: RootState) => state.search);
 
   const [searchState, setSearchState] = useState<SearchBarState>("IDLE");
 

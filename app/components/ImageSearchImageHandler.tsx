@@ -11,7 +11,7 @@ export default function ImageSearchImageHandler() {
     const [imageLoaded, setImageLoaded] = useState(false);
     
     const dispatch = useDispatch();
-    const { imageFile, imageUrl, queryType } = useSelector((state: RootState) => state.search);
+    const { imageFile, imageUrl } = useSelector((state: RootState) => state.search);
 
     useEffect(() => {
         if (imageFile) {
