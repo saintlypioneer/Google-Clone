@@ -2,33 +2,32 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import GoogleLensSearchPopup from "./GoogleLensSearchPopup";
 import { useRouter } from "next/navigation";
-import { useDispatch } from "react-redux";
-import { setSearchResults } from "../store/searchSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchSearchResults, setQuery, setQueryType } from "../store/searchSlice";
+import { AppDispatch, RootState } from "../store/store";
+import GoogleLensSearchPopup from "./GoogleLensSearchPopup";
 
 type SearchBarState = "IDLE" | "TEXT_SEARCHING" | "SPEAKING" | "CAMERA";
 
 export default function SearchBar() {
   const router = useRouter();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
+  const { query, queryType } = useSelector((state: RootState) => state.search);
 
   const [searchState, setSearchState] = useState<SearchBarState>("IDLE");
-  const [query, setQuery] = useState("");
 
   const handleKeyPress = async (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
-      try {
-        const response = await fetch(`/api/v1/search?q=${query}`);
-        const data = await response.json();
-        dispatch(setSearchResults(data.results));
-        // redirect to '/lens'
+      if (queryType === 'text') {
+        dispatch(fetchSearchResults({ query, queryType }));
         router.push("/lens");
-        console.log(data);
-      } catch (error) {
-        console.error('Error fetching search results:', error);
       }
     }
+  };
+
+  const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch(setQuery(e.target.value));
   };
 
   return (
@@ -51,13 +50,13 @@ export default function SearchBar() {
             type="text"
             className="bg-transparent outline-none dark:text-[#e8e8e8] w-full"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={handleQueryChange}
             onKeyDown={handleKeyPress}
           />
           <Image
             onClick={() => {
               setSearchState("SPEAKING");
-              // redirect to '/voice'
+              dispatch(setQueryType('text'));
               router.push("/voice");
             }}
             src="/micColourful.svg"
@@ -67,7 +66,10 @@ export default function SearchBar() {
             height={24}
           />
           <Image
-            onClick={() => setSearchState("CAMERA")}
+            onClick={() => {
+              setSearchState("CAMERA");
+              dispatch(setQueryType('image'));
+            }}
             src="/camera.svg"
             alt="Camera icon"
             width={24}

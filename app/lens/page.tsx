@@ -1,15 +1,25 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useSelector } from 'react-redux';
 import { RootState } from '../store/store';
 import GoogleLensNavigation from "../components/GoogleLensNavigation";
 import ImageSearchImageHandler from "../components/ImageSearchImageHandler";
 import ImageSearchResultCard from "../components/ImageSearchResultCard";
+import { useRouter } from "next/navigation";
 
 export default function Lens() {
   const navRef = useRef<HTMLDivElement>(null);
-  const searchResults = useSelector((state: RootState) => state.search.results);
+  const {results: searchResults, status} = useSelector((state: RootState) => state.search);
+
+  const router = useRouter();
+
+  useEffect(()=>{
+    // when status is "idle" and results is empty, redirect back to home
+    if (status === 'idle' && searchResults.length === 0) {
+      router.push('/');
+    }
+  }, [searchResults, status]);
 
   return (
     <div className="flex flex-col h-screen">

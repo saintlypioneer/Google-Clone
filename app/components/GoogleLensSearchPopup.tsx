@@ -1,5 +1,9 @@
 import Image from "next/image";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from "../store/store";
+import { setImageFile, setQueryType, fetchImageSearchResults } from "../store/searchSlice";
+import { useRouter } from 'next/navigation';
 
 interface GoogleLensSearchPopupProps {
   setSearchState: (
@@ -10,13 +14,11 @@ interface GoogleLensSearchPopupProps {
 export default function GoogleLensSearchPopup(
   props: GoogleLensSearchPopupProps
 ) {
+  const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
 
   const [isDragOver, setIsDragOver] = useState(false);
-  const [droppedFile, setDroppedFile] = useState<File | null>(null);
-
-  useEffect(() => {
-    console.log(droppedFile?.name);
-  }, [droppedFile]);
+  const [imageLink, setImageLink] = useState('');
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -33,9 +35,27 @@ export default function GoogleLensSearchPopup(
     
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const file = e.dataTransfer.files[0];
-      setDroppedFile(file);
-      // You can process the dropped file here or store it for later use
+      handleImageSearch(file);
     }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      handleImageSearch(file);
+    }
+  };
+
+  const handleImageSearch = (file: File) => {
+    dispatch(setImageFile(file));
+    dispatch(setQueryType('image'));
+    dispatch(fetchImageSearchResults(file));
+    router.push("/lens");
+  };
+
+  const handleImageLinkSearch = () => {
+    // For now, we're not handling image URL searches
+    console.log("Image link search not implemented yet");
   };
 
   return (
@@ -70,9 +90,15 @@ export default function GoogleLensSearchPopup(
           />
           <div className="font-sans dark:text-[#93969b] text-base font-medium">
             <span>Drag an image here or&nbsp;</span>
-            <span className="text-[#8ab4f8] hover:underline">
+            <label className="text-[#8ab4f8] hover:underline cursor-pointer">
               upload a file
-            </span>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileUpload}
+              />
+            </label>
           </div>
         </div>
         <div className="w-full">
@@ -87,20 +113,23 @@ export default function GoogleLensSearchPopup(
               type="text"
               className="flex-1 dark:bg-[#303134] border dark:border-[#3c4043] dark:text-[#f1f3f4] placeholder:text-[#757575] px-6 py-[10px] rounded-full focus:outline-none focus:border-[#8ab4f8] hover:border-[#5f6368]"
               placeholder="Paste image link"
+              value={imageLink}
+              onChange={(e) => setImageLink(e.target.value)}
             />
-            <button className="dark:bg-[#303134] px-6 py-[10px] dark:text-[#8ab4f8] border dark:border-[#3c4043] rounded-full hover:border-[#3c4043] hover:text-[#d2e3fc] hover:bg-[rgba(136,170,187,0.04)]">
+            <button
+              className="dark:bg-[#303134] px-6 py-[10px] dark:text-[#8ab4f8] border dark:border-[#3c4043] rounded-full hover:border-[#3c4043] hover:text-[#d2e3fc] hover:bg-[rgba(136,170,187,0.04)]"
+              onClick={handleImageLinkSearch}
+            >
               Search
             </button>
           </div>
         </div>
-        {
-          isDragOver && (
-            <div className="bg-[#343c4d] absolute left-0 right-0 top-0 bottom-0 flex flex-col justify-center items-center rounded-lg border border-dashed border-[#667ca7]">
-          {/* to handle file drag and drop */}
-          <span className="text-[#93969b] font-sans text-base font-medium">Drop an image here</span>
-        </div>
-          )
-        }
+        {isDragOver && (
+          <div className="bg-[#343c4d] absolute left-0 right-0 top-0 bottom-0 flex flex-col justify-center items-center rounded-lg border border-dashed border-[#667ca7]">
+            {/* to handle file drag and drop */}
+            <span className="text-[#93969b] font-sans text-base font-medium">Drop an image here</span>
+          </div>
+        )}
       </div>
     </div>
   );
