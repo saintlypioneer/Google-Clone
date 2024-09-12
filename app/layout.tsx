@@ -15,7 +15,14 @@ const geistMono = localFont({
 
 export const metadata: Metadata = {
   title: "Google",
-  description: "A fast and minimal search engine"
+  description: "A fast and minimal search engine",
+  icons: [
+    {
+      rel: "icon",
+      href: "/google-tile.svg",
+      url: "/google-tile.svg", // Added this line
+    },
+  ],
 };
 
 export default function RootLayout({
