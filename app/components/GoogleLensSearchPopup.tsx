@@ -10,7 +10,7 @@ export default function GoogleLensSearchPopup(
   props: GoogleLensSearchPopupProps
 ) {
   return (
-    <div className="w-full p-6 absolute -top-6 dark:bg-[#303134] rounded-3xl">
+    <div className="w-full p-6 absolute -top-4 dark:bg-[#303134] rounded-3xl">
       <div className="flex items-center w-full">
         {/* heading */}
         <span className="font-sans text-base flex-1 text-center text-[#f1f3f4] font-semibold">

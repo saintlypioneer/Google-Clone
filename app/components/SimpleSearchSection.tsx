@@ -17,7 +17,7 @@ const languages = [
 
 export default function SimpleSearchSection() {
   return (
-    <section className="flex-1 flex flex-col justify-center items-center gap-6">
+    <section className="flex flex-col justify-center items-center gap-6">
       <Image src={googleLogo} alt="" />
       <SearchBar />
       <div className="flex justify-center gap-3">

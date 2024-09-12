@@ -3,10 +3,14 @@
 import Image from "next/image";
 import { useState } from "react";
 import GoogleLensSearchPopup from "./GoogleLensSearchPopup";
+import { useRouter } from "next/navigation";
 
 type SearchBarState = "IDLE" | "TEXT_SEARCHING" | "SPEAKING" | "CAMERA";
 
 export default function SearchBar() {
+
+    const router = useRouter();
+
   const [searchState, setSearchState] = useState<SearchBarState>("IDLE");
 
   return (
@@ -23,8 +27,12 @@ export default function SearchBar() {
             type="text"
             className="bg-transparent outline-none dark:text-[#e8e8e8] w-full"
           />
-          <Image onClick={()=>setSearchState("SPEAKING")}
-            src="/mic.svg"
+          <Image onClick={()=>{
+            setSearchState("SPEAKING");
+            // redirect to '/voice'
+            router.push("/voice");
+          }}
+            src="/micColourful.svg"
             className="mr-2"
             alt="Mic icon"
             width={24}
