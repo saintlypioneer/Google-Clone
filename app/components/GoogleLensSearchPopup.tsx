@@ -1,5 +1,5 @@
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 interface GoogleLensSearchPopupProps {
   setSearchState: (
@@ -13,6 +13,10 @@ export default function GoogleLensSearchPopup(
 
   const [isDragOver, setIsDragOver] = useState(false);
   const [droppedFile, setDroppedFile] = useState<File | null>(null);
+
+  useEffect(() => {
+    console.log(droppedFile?.name);
+  }, [droppedFile]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
