@@ -1,4 +1,5 @@
 import Image from "next/image";
+import React, { useState } from "react";
 
 interface GoogleLensSearchPopupProps {
   setSearchState: (
@@ -9,6 +10,30 @@ interface GoogleLensSearchPopupProps {
 export default function GoogleLensSearchPopup(
   props: GoogleLensSearchPopupProps
 ) {
+
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [droppedFile, setDroppedFile] = useState<File | null>(null);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      setDroppedFile(file);
+      // You can process the dropped file here or store it for later use
+    }
+  };
+
   return (
     <div className="w-full p-6 absolute -top-4 dark:bg-[#303134] rounded-3xl">
       <div className="flex items-center w-full">
@@ -25,7 +50,12 @@ export default function GoogleLensSearchPopup(
           />
         </button>
       </div>
-      <div className="mt-4 bg-[#202124] p-6 rounded-lg border border-dashed border-[#3c4043] flex flex-col items-center">
+      <div
+        className={`relative mt-4 p-6 rounded-lg overflow-clip border border-dashed border-[#3c4043] flex flex-col items-center bg-[#202124]`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
         {/* main content */}
         <div className="flex items-center gap-5 py-10">
           <Image
@@ -59,6 +89,14 @@ export default function GoogleLensSearchPopup(
             </button>
           </div>
         </div>
+        {
+          isDragOver && (
+            <div className="bg-[#343c4d] absolute left-0 right-0 top-0 bottom-0 flex flex-col justify-center items-center rounded-lg border border-dashed border-[#667ca7]">
+          {/* to handle file drag and drop */}
+          <span className="text-[#93969b] font-sans text-base font-medium">Drop an image here</span>
+        </div>
+          )
+        }
       </div>
     </div>
   );
