@@ -25,14 +25,11 @@ export default function SimpleHeader() {
             </li>
           </ul>
           <button>
-            <Image src="/searchlabs.svg" alt="search labs icon" width={24} height={24} />
-          </button>
-          <button>
             {" "}
             <Image src="/grid.svg" alt="grid icon" width={24} height={24} />
           </button>
-          <button>
-            <Image src="/avatar.png" alt="avatar" width={20} height={20} />
+          <button className="dark:bg-[#c2e7ff] dark:text-[#001d35] px-5 py-[10px] rounded-full font-medium">
+            Sign in
           </button>
         </div>
       </nav>
