@@ -2,27 +2,27 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchSearchResults, setQuery, setQueryType } from "../store/searchSlice";
+import { setQuery, setQueryType } from "../store/searchSlice";
 import { AppDispatch, RootState } from "../store/store";
 import GoogleLensSearchPopup from "./GoogleLensSearchPopup";
 
 type SearchBarState = "IDLE" | "TEXT_SEARCHING" | "SPEAKING" | "CAMERA";
 
-export default function SearchBar() {
-  const router = useRouter();
+interface SearchBarProps {
+  onSearch: () => void;
+  onVoiceSearch: () => void;
+}
+
+export default function SearchBar({ onSearch, onVoiceSearch }: SearchBarProps) {
   const dispatch = useDispatch<AppDispatch>();
   const { query, queryType } = useSelector((state: RootState) => state.search);
 
   const [searchState, setSearchState] = useState<SearchBarState>("IDLE");
 
-  const handleKeyPress = async (event: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
-      if (queryType === 'text') {
-        dispatch(fetchSearchResults({ query, queryType }));
-        router.push("/lens");
-      }
+      onSearch();
     }
   };
 
@@ -57,7 +57,7 @@ export default function SearchBar() {
             onClick={() => {
               setSearchState("SPEAKING");
               dispatch(setQueryType('text'));
-              router.push("/voice");
+              onVoiceSearch();
             }}
             src="/micColourful.svg"
             className="mr-2"
