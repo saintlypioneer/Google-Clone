@@ -3,7 +3,7 @@ import Image from "next/image";
 
 export default function GoogleLensNavigation() {
   return (
-    <header className="bg-white px-4 py-3">
+    
       <nav className="flex items-center justify-between">
         <Link href="/">
           <Image
@@ -40,6 +40,5 @@ export default function GoogleLensNavigation() {
           </div>
         </div>
       </nav>
-    </header>
   );
 }
