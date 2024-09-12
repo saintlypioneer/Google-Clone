@@ -2,27 +2,28 @@
 
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store"; // Adjust the import path as needed
+import { updateImageUrl } from "../store/searchSlice"; // Adjust the import path as needed
 
 export default function ImageSearchImageHandler() {
     const [searchType, setSearchType] = useState("Search");
-    const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [imageLoaded, setImageLoaded] = useState(false);
     
-    const imageFile = useSelector((state: RootState) => state.search.imageFile);
+    const dispatch = useDispatch();
+    const { imageFile, imageUrl, queryType } = useSelector((state: RootState) => state.search);
 
     useEffect(() => {
         if (imageFile) {
             const url = URL.createObjectURL(imageFile);
-            setImageUrl(url);
-            setImageLoaded(false); // Reset image loaded state when new image is set
+            dispatch(updateImageUrl(url));
             return () => URL.revokeObjectURL(url);
-        } else {
-            setImageUrl(null);
-            setImageLoaded(false);
         }
-    }, [imageFile]);
+    }, [imageFile, dispatch]);
+
+    useEffect(() => {
+        setImageLoaded(false);
+    }, [imageUrl]);
 
     return (
         <div className="flex flex-col h-full py-8">
@@ -54,6 +55,7 @@ export default function ImageSearchImageHandler() {
                             objectFit="contain"
                             onLoad={() => setImageLoaded(true)}
                             className={`rounded-2xl max-h-full w-auto ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                            unoptimized={true}
                         />
                     )}
                 </div>

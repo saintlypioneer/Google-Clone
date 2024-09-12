@@ -19,6 +19,7 @@ interface SearchState {
   query: string;
   queryType: QueryType;
   imageFile: File | null;
+  imageUrl: string | null;
 }
 
 const initialState: SearchState = {
@@ -28,6 +29,7 @@ const initialState: SearchState = {
   query: '',
   queryType: 'text',
   imageFile: null,
+  imageUrl: null,
 };
 
 export const fetchSearchResults = createAsyncThunk(
@@ -82,21 +84,28 @@ const searchSlice = createSlice({
     },
     setImageFile(state, action: PayloadAction<File | null>) {
       state.imageFile = action.payload;
+      state.imageUrl = action.payload ? URL.createObjectURL(action.payload) : null;
     },
     clearResults(state) {
       state.results = [];
+    },
+    updateImageUrl(state, action: PayloadAction<string>) {
+      state.imageUrl = action.payload;
     },
   },
   extraReducers: (builder) => {
     builder
       .addCase(fetchSearchResults.pending, (state) => {
         state.status = 'loading';
-        state.results = []; // Clear results when a new search starts
-        state.error = null; // Clear any previous errors
+        state.results = [];
+        state.error = null;
       })
       .addCase(fetchSearchResults.fulfilled, (state, action) => {
         state.status = 'succeeded';
         state.results = action.payload;
+        if (state.queryType === 'text' && action.payload.length > 0) {
+          state.imageUrl = action.payload[0].original;
+        }
       })
       .addCase(fetchSearchResults.rejected, (state, action) => {
         state.status = 'failed';
@@ -104,8 +113,8 @@ const searchSlice = createSlice({
       })
       .addCase(fetchImageSearchResults.pending, (state) => {
         state.status = 'loading';
-        state.results = []; // Clear results when a new image search starts
-        state.error = null; // Clear any previous errors
+        state.results = [];
+        state.error = null;
       })
       .addCase(fetchImageSearchResults.fulfilled, (state, action) => {
         state.status = 'succeeded';
@@ -118,5 +127,5 @@ const searchSlice = createSlice({
   },
 });
 
-export const { setQuery, setQueryType, setImageFile, clearResults } = searchSlice.actions;
+export const { setQuery, setQueryType, setImageFile, clearResults, updateImageUrl } = searchSlice.actions;
 export default searchSlice.reducer;
