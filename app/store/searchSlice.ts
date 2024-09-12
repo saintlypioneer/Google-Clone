@@ -10,7 +10,7 @@ export interface SearchResult {
   favicon: string;
 }
 
-export type QueryType = 'text' | 'image';
+export type QueryType = 'text' | 'image' | 'imageUrl';
 
 interface SearchState {
   results: SearchResult[];
@@ -50,10 +50,16 @@ export const fetchSearchResults = createAsyncThunk(
 
 export const fetchImageSearchResults = createAsyncThunk(
   'search/fetchImageResults',
-  async (file: File, { rejectWithValue }) => {
+  async (payload: File | string, { rejectWithValue }) => {
     try {
       const formData = new FormData();
-      formData.append('image', file);
+      if (payload instanceof File) {
+        formData.append('image', payload);
+      } else if (typeof payload === 'string') {
+        formData.append('imageUrl', payload);
+      } else {
+        throw new Error('Invalid payload type');
+      }
 
       const response = await fetch('/api/v1/image-search', {
         method: 'POST',
@@ -85,6 +91,10 @@ const searchSlice = createSlice({
     setImageFile(state, action: PayloadAction<File | null>) {
       state.imageFile = action.payload;
       state.imageUrl = action.payload ? URL.createObjectURL(action.payload) : null;
+    },
+    setImageUrl(state, action: PayloadAction<string | null>) {
+      state.imageUrl = action.payload;
+      state.imageFile = null;
     },
     clearResults(state) {
       state.results = [];
@@ -127,5 +137,13 @@ const searchSlice = createSlice({
   },
 });
 
-export const { setQuery, setQueryType, setImageFile, clearResults, updateImageUrl } = searchSlice.actions;
+export const { 
+  setQuery, 
+  setQueryType, 
+  setImageFile, 
+  setImageUrl, 
+  clearResults, 
+  updateImageUrl 
+} = searchSlice.actions;
+
 export default searchSlice.reducer;

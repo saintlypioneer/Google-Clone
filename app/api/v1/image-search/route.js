@@ -1,30 +1,81 @@
 import { NextResponse } from 'next/server';
 import { ImageAnnotatorClient } from '@google-cloud/vision';
 import { join } from 'path';
-import { writeFile } from 'fs/promises';
+import { writeFile, unlink } from 'fs/promises';
+import { createWriteStream } from 'fs';
 import { v4 as uuidv4 } from 'uuid';
+import https from 'https';
+
+async function downloadImage(url, filepath) {
+  return new Promise((resolve, reject) => {
+    https.get(url, (response) => {
+      if (response.statusCode === 200) {
+        const fileSize = parseInt(response.headers['content-length'], 10);
+        let downloadedSize = 0;
+
+        // Check file size (4MB limit)
+        if (fileSize > 4 * 1024 * 1024) {
+          reject(new Error('File size exceeds the 4MB limit'));
+          return;
+        }
+
+        const fileStream = createWriteStream(filepath);
+        response.pipe(fileStream);
+
+        response.on('data', (chunk) => {
+          downloadedSize += chunk.length;
+          if (downloadedSize > 4 * 1024 * 1024) {
+            fileStream.close();
+            unlink(filepath).catch(console.error); // Clean up the partially downloaded file
+            reject(new Error('File size exceeds the 4MB limit'));
+          }
+        });
+
+        fileStream.on('finish', () => {
+          fileStream.close();
+          resolve();
+        });
+
+        fileStream.on('error', (error) => {
+          unlink(filepath).catch(console.error); // Clean up in case of error
+          reject(error);
+        });
+      } else {
+        reject(new Error(`Failed to download image: ${response.statusCode}`));
+      }
+    }).on('error', (error) => {
+      reject(error);
+    });
+  });
+}
 
 export async function POST(request) {
+  let tempFilePath;
+
   try {
     const formData = await request.formData();
     const file = formData.get('image');
+    const imageUrl = formData.get('imageUrl');
 
-    if (!file) {
-      return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
+    if (file) {
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+
+      // Check file size (4MB limit)
+      const fileSizeInMB = buffer.length / (1024 * 1024);
+      if (fileSizeInMB > 4) {
+        return NextResponse.json({ error: 'File size exceeds the 4MB limit' }, { status: 400 });
+      }
+
+      // Temporarily save the file
+      tempFilePath = join('/tmp', `${uuidv4()}-${file.name}`);
+      await writeFile(tempFilePath, buffer);
+    } else if (imageUrl) {
+      tempFilePath = join('/tmp', `${uuidv4()}-image.jpg`);
+      await downloadImage(imageUrl, tempFilePath);
+    } else {
+      return NextResponse.json({ error: 'No file uploaded or image URL provided' }, { status: 400 });
     }
-
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    // Check file size (4MB limit)
-    const fileSizeInMB = buffer.length / (1024 * 1024);
-    if (fileSizeInMB > 4) {
-      return NextResponse.json({ error: 'File size exceeds the 4MB limit' }, { status: 400 });
-    }
-
-    // Temporarily save the file
-    const tempFilePath = join('/tmp', `${uuidv4()}-${file.name}`);
-    await writeFile(tempFilePath, buffer);
 
     // Configure Google Vision API with credentials from environment variables
     const client = new ImageAnnotatorClient({
@@ -85,5 +136,10 @@ export async function POST(request) {
   } catch (error) {
     console.error('Error processing image:', error);
     return NextResponse.json({ error: 'An error occurred while processing the image' }, { status: 500 });
+  } finally {
+    // Clean up the temporary file
+    if (tempFilePath) {
+      unlink(tempFilePath).catch(console.error);
+    }
   }
 }

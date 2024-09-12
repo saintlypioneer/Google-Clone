@@ -2,7 +2,7 @@ import Image from "next/image";
 import React, { useState } from "react";
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from "../store/store";
-import { setImageFile, setQueryType, fetchImageSearchResults } from "../store/searchSlice";
+import { setImageFile, setImageUrl, setQueryType, fetchImageSearchResults } from "../store/searchSlice";
 import { useRouter } from 'next/navigation';
 
 interface GoogleLensSearchPopupProps {
@@ -54,8 +54,15 @@ export default function GoogleLensSearchPopup(
   };
 
   const handleImageLinkSearch = () => {
-    // For now, we're not handling image URL searches
-    console.log("Image link search not implemented yet");
+    if (imageLink.trim()) {
+      dispatch(setImageUrl(imageLink.trim()));
+      dispatch(setQueryType('imageUrl'));
+      dispatch(fetchImageSearchResults(imageLink.trim()));
+      router.push("/lens");
+    } else {
+      // You might want to show an error message to the user
+      console.log("Please enter a valid image URL");
+    }
   };
 
   return (
