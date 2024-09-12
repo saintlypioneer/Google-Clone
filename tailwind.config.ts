@@ -15,6 +15,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ['"Google Sans Display"', 'sans-serif'],
+        roboto: ['Roboto', 'sans-serif'],
       },
     },
   },

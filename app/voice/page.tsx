@@ -6,8 +6,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function VoiceSearch() {
-
-    const router = useRouter();
+  const router = useRouter();
 
   const [text, setText] = useState("Speak now");
   const [micColor, setMicColor] = useState("#9aa0a6");
@@ -39,16 +38,16 @@ export default function VoiceSearch() {
     };
   }, []);
 
-//   redirect the user back to home page after 3 seconds
-    useEffect(() => {
-        const redirectTimer = setTimeout(() => {
-            router.push("/");
-        }, 3000);
-    
-        return () => {
-        clearTimeout(redirectTimer);
-        };
-    }, []);
+  //   redirect the user back to home page after 3 seconds
+  useEffect(() => {
+    const redirectTimer = setTimeout(() => {
+      router.push("/");
+    }, 3000);
+
+    return () => {
+      clearTimeout(redirectTimer);
+    };
+  }, []);
 
   return (
     <div className="relative">

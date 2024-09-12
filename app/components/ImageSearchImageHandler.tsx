@@ -7,7 +7,7 @@ export default function ImageSearchImageHandler() {
     const [searchType, setSearchType] = useState("Search");
 
     return (
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full py-8">
             <div className="flex justify-center items-center py-4">
                 <button className="flex items-center gap-2 px-5 py-2 bg-transparent hover:bg-white/5 rounded-full border border-white/10">
                     <Image
@@ -21,7 +21,7 @@ export default function ImageSearchImageHandler() {
                     </span>
                 </button>
             </div>
-            <div className="flex-grow flex items-center justify-center overflow-hidden">
+            <div className="flex-grow flex items-center justify-center overflow-hidden relative">
                 <div className="w-full h-[80%] relative">
                     <Image 
                         src="/ss.png"
