@@ -11,33 +11,37 @@ import debounce from "lodash/debounce";
 export default function ImageSearchImageHandler() {
   const [searchType, setSearchType] = useState("Search");
   const [imageLoaded, setImageLoaded] = useState(false);
-    
+
   const useAppDispatch = () => useDispatch<AppDispatch>();
   const dispatch = useAppDispatch();
 
-  const { imageFile, imageUrl } = useSelector((state: RootState) => state.search);
-  
-  const [overlayCoordinates, setOverlayCoordinates] = useState([15, 10, 85, 90]); // left, top, right, bottom in percentage
+  const { imageFile, imageUrl } = useSelector(
+    (state: RootState) => state.search
+  );
+
+  const [overlayCoordinates, setOverlayCoordinates] = useState([
+    15, 10, 85, 90,
+  ]); // left, top, right, bottom in percentage
   const dragStartRef = useRef({ x: 0, y: 0, left: 0, top: 0 });
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayCoordinatesRef = useRef(overlayCoordinates);
-  
+
   useEffect(() => {
-      overlayCoordinatesRef.current = overlayCoordinates;
-    }, [overlayCoordinates]);
-    
-    useEffect(() => {
-        if (imageFile) {
-            const url = URL.createObjectURL(imageFile);
-            dispatch(updateImageUrl(url));
-            return () => URL.revokeObjectURL(url);
-        }
-    }, [imageFile, dispatch]);
-    
-    useEffect(() => {
-        setImageLoaded(false);
-    }, [imageUrl]);
-    
+    overlayCoordinatesRef.current = overlayCoordinates;
+  }, [overlayCoordinates]);
+
+  useEffect(() => {
+    if (imageFile) {
+      const url = URL.createObjectURL(imageFile);
+      dispatch(updateImageUrl(url));
+      return () => URL.revokeObjectURL(url);
+    }
+  }, [imageFile, dispatch]);
+
+  useEffect(() => {
+    setImageLoaded(false);
+  }, [imageUrl]);
+
   const cropImage = useCallback(() => {
     if (!imageUrl || !canvasRef.current) return;
 
@@ -69,7 +73,9 @@ export default function ImageSearchImageHandler() {
 
       canvas.toBlob((blob) => {
         if (blob) {
-          const croppedFile = new File([blob], "cropped_image.png", { type: "image/png" });
+          const croppedFile = new File([blob], "cropped_image.png", {
+            type: "image/png",
+          });
           dispatch(fetchImageSearchResults(croppedFile));
         }
       }, "image/png");
@@ -126,30 +132,33 @@ export default function ImageSearchImageHandler() {
     [handleOverlayChange]
   );
 
-  const handleOverlayDrag = useCallback((clientX: number, clientY: number) => {
-    const container = document.querySelector(".overlay-container");
-    if (!container) return;
+  const handleOverlayDrag = useCallback(
+    (clientX: number, clientY: number) => {
+      const container = document.querySelector(".overlay-container");
+      if (!container) return;
 
-    const rect = container.getBoundingClientRect();
-    const deltaX = ((clientX - dragStartRef.current.x) / rect.width) * 100;
-    const deltaY = ((clientY - dragStartRef.current.y) / rect.height) * 100;
+      const rect = container.getBoundingClientRect();
+      const deltaX = ((clientX - dragStartRef.current.x) / rect.width) * 100;
+      const deltaY = ((clientY - dragStartRef.current.y) / rect.height) * 100;
 
-    setOverlayCoordinates((prev) => {
-      const width = prev[2] - prev[0];
-      const height = prev[3] - prev[1];
+      setOverlayCoordinates((prev) => {
+        const width = prev[2] - prev[0];
+        const height = prev[3] - prev[1];
 
-      let newLeft = dragStartRef.current.left + deltaX;
-      let newTop = dragStartRef.current.top + deltaY;
+        let newLeft = dragStartRef.current.left + deltaX;
+        let newTop = dragStartRef.current.top + deltaY;
 
-      // Clamp the values to keep the overlay within the image boundaries
-      newLeft = Math.max(2, Math.min(newLeft, 98 - width));
-      newTop = Math.max(2, Math.min(newTop, 98 - height));
+        // Clamp the values to keep the overlay within the image boundaries
+        newLeft = Math.max(2, Math.min(newLeft, 98 - width));
+        newTop = Math.max(2, Math.min(newTop, 98 - height));
 
-      return [newLeft, newTop, newLeft + width, newTop + height];
-    });
+        return [newLeft, newTop, newLeft + width, newTop + height];
+      });
 
-    handleOverlayChange();
-  }, [handleOverlayChange]);
+      handleOverlayChange();
+    },
+    [handleOverlayChange]
+  );
 
   const handleCornerMouseDown = useCallback(
     (index: number) => (e: React.MouseEvent) => {
@@ -196,7 +205,7 @@ export default function ImageSearchImageHandler() {
     top: `${overlayCoordinates[1]}%`,
     right: `${100 - overlayCoordinates[2]}%`,
     bottom: `${100 - overlayCoordinates[3]}%`,
-    backgroundColor: "rgba(0, 0, 255, 0.3)", // Semi-transparent blue
+    backgroundColor: "rgba(0,0,0,0.2)", // Semi-transparent blue
     cursor: "move",
     borderRadius: "6px",
   };
@@ -241,7 +250,7 @@ export default function ImageSearchImageHandler() {
               height={1000}
               objectFit="contain"
               onLoad={() => setImageLoaded(true)}
-              className={`max-h-full w-auto ${
+              className={` max-h-full w-auto ${
                 imageLoaded ? "opacity-100" : "opacity-0"
               }`}
               unoptimized={true}
@@ -249,6 +258,44 @@ export default function ImageSearchImageHandler() {
           )}
           {imageLoaded && (
             <>
+              {/* dark overlay */}
+              {/* create 4 div that do not overlap with bg-black/30 */}
+              <div
+                className="absolute bg-black/50"
+                style={{
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: `${overlayCoordinates[0]}%`,
+                }}
+              ></div>
+              <div
+                className="absolute bg-black/50"
+                style={{
+                  top: 0,
+                  left: `${overlayCoordinates[0]}%`,
+                  width: `${overlayCoordinates[2] - overlayCoordinates[0]}%`,
+                  height: `${overlayCoordinates[1]}%`,
+                }}
+              ></div>
+              <div
+                className="absolute bg-black/50"
+                style={{
+                  top: `${overlayCoordinates[3]}%`,
+                  left: `${overlayCoordinates[0]}%`,
+                  width: `${overlayCoordinates[2] - overlayCoordinates[0]}%`,
+                  height: `${100 - overlayCoordinates[3]}%`,
+                }}
+              ></div>
+              <div
+                className="absolute bg-black/50"
+                style={{
+                  top: 0,
+                  left: `${overlayCoordinates[2]}%`,
+                  width: `${100 - overlayCoordinates[2]}%`,
+                  height: "100%",
+                }}
+              ></div>
               <div
                 style={overlayStyle}
                 onMouseDown={handleOverlayMouseDown}
@@ -257,8 +304,8 @@ export default function ImageSearchImageHandler() {
                 style={{
                   ...handleStyle,
                   borderTopLeftRadius: "6px",
-                  borderLeft: "3px solid blue",
-                  borderTop: "3px solid blue",
+                  borderLeft: "3px solid white",
+                  borderTop: "3px solid white",
                   left: `${overlayCoordinates[0]}%`,
                   top: `${overlayCoordinates[1]}%`,
                 }}
@@ -268,8 +315,8 @@ export default function ImageSearchImageHandler() {
                 style={{
                   ...handleStyle,
                   borderTopRightRadius: "6px",
-                  borderTop: "3px solid blue",
-                  borderRight: "3px solid blue",
+                  borderTop: "3px solid white",
+                  borderRight: "3px solid white",
                   right: `${100 - overlayCoordinates[2]}%`,
                   top: `${overlayCoordinates[1]}%`,
                 }}
@@ -279,8 +326,8 @@ export default function ImageSearchImageHandler() {
                 style={{
                   ...handleStyle,
                   borderBottomRightRadius: "6px",
-                  borderBottom: "3px solid blue",
-                  borderRight: "3px solid blue",
+                  borderBottom: "3px solid white",
+                  borderRight: "3px solid white",
                   right: `${100 - overlayCoordinates[2]}%`,
                   bottom: `${100 - overlayCoordinates[3]}%`,
                 }}
@@ -290,8 +337,8 @@ export default function ImageSearchImageHandler() {
                 style={{
                   ...handleStyle,
                   borderBottomLeftRadius: "6px",
-                  borderLeft: "3px solid blue",
-                  borderBottom: "3px solid blue",
+                  borderLeft: "3px solid white",
+                  borderBottom: "3px solid white",
                   left: `${overlayCoordinates[0]}%`,
                   bottom: `${100 - overlayCoordinates[3]}%`,
                 }}
