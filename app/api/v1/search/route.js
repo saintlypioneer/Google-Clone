@@ -1,4 +1,4 @@
-// app/api/search/route.js
+// app/api/v1/search/route.js
 import { NextResponse } from 'next/server';
 import { getJson } from 'serpapi';
 

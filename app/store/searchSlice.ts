@@ -10,16 +10,28 @@ export interface SearchResult {
   favicon: string;
 }
 
+interface Suggestion {
+  relevance: number;
+  serpapi_link: string;
+  type: string;
+  value: string;
+}
+
 export type QueryType = 'text' | 'image' | 'imageUrl';
+
+type Status = 'idle' | 'loading' | 'succeeded' | 'failed';
 
 interface SearchState {
   results: SearchResult[];
-  status: 'idle' | 'loading' | 'succeeded' | 'failed';
+  status: Status;
   error: string | null;
   query: string;
   queryType: QueryType;
   imageFile: File | null;
   imageUrl: string | null;
+  suggestions: Suggestion[];
+  suggestionsStatus: Status; // New field for suggestions status
+  suggestionsError: string | null; // New field for suggestions error
 }
 
 const initialState: SearchState = {
@@ -30,6 +42,9 @@ const initialState: SearchState = {
   queryType: 'text',
   imageFile: null,
   imageUrl: null,
+  suggestions: [],
+  suggestionsStatus: 'idle', // Initialize suggestions status
+  suggestionsError: null, // Initialize suggestions error
 };
 
 export const fetchSearchResults = createAsyncThunk(
@@ -78,6 +93,22 @@ export const fetchImageSearchResults = createAsyncThunk(
   }
 );
 
+export const fetchAutocompleteSuggestions = createAsyncThunk(
+  'search/fetchAutocompleteSuggestions',
+  async (query: string, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`/api/v1/autocomplete?q=${query}`);
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const data = await response.json();
+      return data.suggestions;
+    } catch (error) {
+      return rejectWithValue('Failed to fetch autocomplete suggestions');
+    }
+  }
+);
+
 const searchSlice = createSlice({
   name: 'search',
   initialState,
@@ -101,6 +132,11 @@ const searchSlice = createSlice({
     },
     updateImageUrl(state, action: PayloadAction<string>) {
       state.imageUrl = action.payload;
+    },
+    clearSuggestions(state) {
+      state.suggestions = [];
+      state.suggestionsStatus = 'idle';
+      state.suggestionsError = null;
     },
   },
   extraReducers: (builder) => {
@@ -133,6 +169,20 @@ const searchSlice = createSlice({
       .addCase(fetchImageSearchResults.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload as string;
+      })
+      .addCase(fetchAutocompleteSuggestions.pending, (state) => {
+        state.suggestionsStatus = 'loading';
+        state.suggestionsError = null;
+      })
+      .addCase(fetchAutocompleteSuggestions.fulfilled, (state, action) => {
+        state.suggestionsStatus = 'succeeded';
+        state.suggestions = action.payload;
+        state.suggestionsError = null;
+      })
+      .addCase(fetchAutocompleteSuggestions.rejected, (state, action) => {
+        state.suggestionsStatus = 'failed';
+        state.suggestionsError = action.payload as string;
+        state.suggestions = [];
       });
   },
 });
@@ -143,7 +193,8 @@ export const {
   setImageFile, 
   setImageUrl, 
   clearResults, 
-  updateImageUrl 
+  updateImageUrl,
+  clearSuggestions
 } = searchSlice.actions;
 
 export default searchSlice.reducer;

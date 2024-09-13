@@ -1,12 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setQuery, setQueryType } from "../store/searchSlice";
+import { setQuery, setQueryType, fetchAutocompleteSuggestions, clearSuggestions } from "../store/searchSlice";
 import { AppDispatch, RootState } from "../store/store";
 import GoogleLensSearchPopup from "./GoogleLensSearchPopup";
 import TextButton from "./TextButton";
+import debounce from 'lodash/debounce';
 
 type SearchBarState = "IDLE" | "TEXT_SEARCHING" | "SPEAKING" | "CAMERA";
 
@@ -17,9 +18,28 @@ interface SearchBarProps {
 
 export default function SearchBar({ onSearch, onVoiceSearch }: SearchBarProps) {
   const dispatch = useDispatch<AppDispatch>();
-  const { query } = useSelector((state: RootState) => state.search);
+  const { query, suggestions } = useSelector((state: RootState) => state.search);
 
   const [searchState, setSearchState] = useState<SearchBarState>("IDLE");
+  const [isInputFocused, setIsInputFocused] = useState(false);
+
+  const debouncedFetchSuggestions = useCallback(
+    debounce((query: string) => {
+      if (query.trim()) {
+        dispatch(fetchAutocompleteSuggestions(query));
+      } else {
+        dispatch(clearSuggestions());
+      }
+    }, 200),
+    [dispatch]
+  );
+
+  useEffect(() => {
+    debouncedFetchSuggestions(query);
+    return () => {
+      debouncedFetchSuggestions.cancel();
+    };
+  }, [query, debouncedFetchSuggestions]);
 
   const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
@@ -31,25 +51,10 @@ export default function SearchBar({ onSearch, onVoiceSearch }: SearchBarProps) {
     dispatch(setQuery(e.target.value));
   };
 
-  // for trending searches and search suggestions
-  const [isInputFocused, setIsInputFocused] = useState(false);
-  // suggested searches like {text, url}
-  const [suggestedSearches, setSuggestedSearches] = useState<
-    { text: string; url: string }[]
-  >([
-    { text: "Trending Search 1", url: "#" },
-    { text: "Trending Search 2", url: "#" },
-    { text: "Trending Search 3", url: "#" },
-    { text: "Trending Search 4", url: "#" },
-    { text: "Trending Search 5", url: "#" },
-    { text: "Trending Search 6", url: "#" },
-    { text: "Trending Search 7", url: "#" },
-    { text: "Trending Search 8", url: "#" },
-    { text: "Trending Search 9", url: "#" },
-    { text: "Trending Search 10", url: "#" },
-  ]);
-
-  console.log(setSuggestedSearches);
+  const handleSuggestionClick = (suggestion: string) => {
+    dispatch(setQuery(suggestion));
+    onSearch();
+  };
 
   return (
     <div
@@ -58,13 +63,13 @@ export default function SearchBar({ onSearch, onVoiceSearch }: SearchBarProps) {
           ? "dark:bg-[#202124]"
           : "shadow-[0_1px_6px_0_#171717] dark:bg-[#303134]"
       } hover:bg-[#303134] hover:shadow-[0_1px_6px_0_#171717] ${
-        isInputFocused ? "rounded-t-3xl" : "rounded-3xl"
+        (isInputFocused && query!="") ? "rounded-t-3xl" : "rounded-3xl"
       }`}
     >
       {searchState === "IDLE" && (
         <div
           className={`flex items-center gap-2 p-3 border hover:bg-[#303134] hover:shadow-[0_1px_6px_0_#171717] hover:border-transparent ${
-            isInputFocused
+            (isInputFocused && query!="")
               ? "rounded-t-3xl border-transparent bg-[#303134]"
               : "rounded-3xl dark:border-[#5f6368]"
           }`}
@@ -77,7 +82,7 @@ export default function SearchBar({ onSearch, onVoiceSearch }: SearchBarProps) {
           />
           <input
             onFocus={() => setIsInputFocused(true)}
-            onBlur={() => setIsInputFocused(false)}
+            onBlur={() => setTimeout(() => setIsInputFocused(false), 200)}
             type="text"
             className="bg-transparent outline-none dark:text-[#e8e8e8] w-full"
             value={query}
@@ -111,23 +116,21 @@ export default function SearchBar({ onSearch, onVoiceSearch }: SearchBarProps) {
       {searchState === "CAMERA" && (
         <GoogleLensSearchPopup setSearchState={setSearchState} />
       )}
-      {/* check if input is in focus */}
 
-      {isInputFocused && (
+      {(isInputFocused && query!="") && (
         <div className="w-full absolute top-[100%] rounded-b-3xl bg-[#303134] shadow-[0_1px_6px_0_#171717, 0, 1px_0_6px_0_#171717,-1px_0_6px_0_#171717]">
-          {/* border separator */}
           <div className="bg-[#5f6368] h-[1px] w-[96%] m-auto"></div>
 
-          {/* suggested searches */}
           <div className="mt-2">
             <span className="font-sans text-sm text-[#9e9e9e] font-medium px-3">
-              Related to recent searches
+            Suggestions
             </span>
             <ul className="mt-2">
-              {suggestedSearches.map((search, index) => (
+              {suggestions.map((suggestion, index) => (
                 <li
                   key={index}
-                  className="flex items-center gap-2 px-3 py-1 hover:bg-[#3c4043] transition-all duration-75 rounded"
+                  className="flex items-center gap-2 px-3 py-1 hover:bg-[#3c4043] transition-all duration-75 rounded cursor-pointer"
+                  onClick={() => handleSuggestionClick(suggestion.value)}
                 >
                   <Image
                     src="/searchMagnifier.svg"
@@ -135,21 +138,15 @@ export default function SearchBar({ onSearch, onVoiceSearch }: SearchBarProps) {
                     width={20}
                     height={20}
                   />
-                  <a
-                    href={search.url}
-                    className="dark:text-[#e8eaed] text-base"
-                  >
-                    {search.text}
-                  </a>
+                  <span className="dark:text-[#e8eaed] text-base">
+                    {suggestion.value}
+                  </span>
                 </li>
               ))}
             </ul>
           </div>
-          {/* bottom buttons */}
           <div className="flex justify-center gap-3 my-6">
-            <TextButton text="Google Search" onClick={()=>{
-              onSearch();
-            }} bgColor="#3c4043" />
+            <TextButton text="Google Search" onClick={onSearch} bgColor="#3c4043" />
             <TextButton text="I'm Feeling Lucky" onClick={() => {}} bgColor="#3c4043" />
           </div>
         </div>
