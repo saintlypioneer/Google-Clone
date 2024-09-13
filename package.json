@@ -11,7 +11,9 @@
   "dependencies": {
     "@google-cloud/vision": "^4.3.2",
     "@reduxjs/toolkit": "^2.2.7",
+    "@types/lodash": "^4.17.7",
     "framer-motion": "^11.5.4",
+    "lodash": "^4.17.21",
     "next": "14.2.9",
     "next-redux-wrapper": "^8.1.0",
     "react": "^18",
