@@ -32,7 +32,7 @@ export default function SearchBar({ onSearch, onVoiceSearch }: SearchBarProps) {
   };
 
   // for trending searches and search suggestions
-  const [isInputFocused, setIsInputFocused] = useState(true);
+  const [isInputFocused, setIsInputFocused] = useState(false);
   // suggested searches like {text, url}
   const [suggestedSearches, setSuggestedSearches] = useState<
     { text: string; url: string }[]
