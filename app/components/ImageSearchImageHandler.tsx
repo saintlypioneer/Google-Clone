@@ -7,6 +7,13 @@ import { AppDispatch } from "../store/store";
 import { RootState } from "../store/store";
 import { updateImageUrl, fetchImageSearchResults } from "../store/searchSlice";
 import debounce from "lodash/debounce";
+import { motion } from "framer-motion";
+
+interface Dot {
+  x: number;
+  y: number;
+  delay: number;
+}
 
 export default function ImageSearchImageHandler() {
   const [searchType, setSearchType] = useState("Search");
@@ -15,7 +22,7 @@ export default function ImageSearchImageHandler() {
   const useAppDispatch = () => useDispatch<AppDispatch>();
   const dispatch = useAppDispatch();
 
-  const { imageFile, imageUrl } = useSelector(
+  const { imageFile, imageUrl, status } = useSelector(
     (state: RootState) => state.search
   );
 
@@ -208,6 +215,7 @@ export default function ImageSearchImageHandler() {
     backgroundColor: "rgba(0,0,0,0.2)", // Semi-transparent blue
     cursor: "move",
     borderRadius: "6px",
+    overflow: "hidden",
   };
 
   const handleStyle: CSSProperties = {
@@ -217,6 +225,22 @@ export default function ImageSearchImageHandler() {
     pointerEvents: "auto",
     cursor: "pointer",
   };
+
+  // Twinkling animation
+  const [dots, setDots] = useState<Dot[]>([]);
+
+  useEffect(() => {
+    if (status === "loading") {
+      const newDots = Array.from({ length: 20 }, () => ({
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        delay: Math.random() * 0.5,
+      }));
+      setDots(newDots);
+    } else {
+      setDots([]);
+    }
+  }, [status]);
 
   return (
     <div className="flex flex-col h-full py-8">
@@ -296,10 +320,29 @@ export default function ImageSearchImageHandler() {
                   height: "100%",
                 }}
               ></div>
-              <div
-                style={overlayStyle}
-                onMouseDown={handleOverlayMouseDown}
-              ></div>
+              <div style={overlayStyle} onMouseDown={handleOverlayMouseDown}>
+                {dots.map((dot, index) => (
+                  <motion.div
+                    key={index}
+                    style={{
+                      position: "absolute",
+                      left: `${dot.x}%`,
+                      top: `${dot.y}%`,
+                      width: "4px",
+                      height: "4px",
+                      borderRadius: "50%",
+                      backgroundColor: "white",
+                    }}
+                    initial={{ scale: 0 }}
+                    animate={{ scale: [0, 1, 0] }}
+                    transition={{
+                      duration: 1.5,
+                      repeat: Infinity,
+                      delay: dot.delay,
+                    }}
+                  />
+                ))}
+              </div>
               <div
                 style={{
                   ...handleStyle,
