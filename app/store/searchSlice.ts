@@ -76,7 +76,7 @@ export const fetchImageSearchResults = createAsyncThunk(
         throw new Error('Invalid payload type');
       }
 
-      const response = await fetch('/api/v1/image-search', {
+      const response = await fetch('/api/v1/google-lens', {
         method: 'POST',
         body: formData,
       });
